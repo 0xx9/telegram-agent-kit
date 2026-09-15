@@ -108,13 +108,26 @@ def upload_blob(token, content: bytes):
 
 
 def main():
+    skip_create = "--existing" in sys.argv or os.getenv("SKIP_CREATE") == "1"
     token = get_token()
     print(f"Pushing {OWNER}/{REPO} ...")
 
     if not repo_exists(token):
+        if skip_create:
+            raise RuntimeError(
+                f"Repository {OWNER}/{REPO} not found. Create it at https://github.com/new first."
+            )
         print("Creating repository ...")
-        create_repo(token)
-        time.sleep(3)
+        try:
+            create_repo(token)
+            time.sleep(3)
+        except RuntimeError as exc:
+            if "403" in str(exc):
+                raise RuntimeError(
+                    "Token cannot create repos. Create https://github.com/new?name=telegram-agent-kit "
+                    "then run: python3 scripts/push-to-github.py --existing"
+                ) from exc
+            raise
     else:
         print("Repository exists, uploading files ...")
 
