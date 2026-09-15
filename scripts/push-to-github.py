@@ -21,12 +21,14 @@ AUTHOR = {
 
 
 def get_token() -> str:
-    try:
-        token = subprocess.check_output(["gh", "auth", "token"], text=True).strip()
-        if token:
-            return token
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+    hosts = os.path.expanduser("~/.config/gh/hosts.yml")
+    if os.path.isfile(hosts):
+        for line in open(hosts):
+            line = line.strip()
+            if line.startswith("oauth_token:"):
+                token = line.split(":", 1)[1].strip()
+                if token:
+                    return token
     creds_path = os.path.expanduser("~/.git-credentials")
     if os.path.isfile(creds_path):
         creds = open(creds_path).read()
