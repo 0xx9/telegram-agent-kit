@@ -26,18 +26,21 @@ Open: https://github.com/new
 
 ## Step 3 — Push
 
+**Recommended** (works on empty repos):
+
 ```bash
 cd /root/telegram-agent-kit
+gh auth setup-git
+git push -u origin main
+```
+
+Alternative:
+
+```bash
 python3 scripts/push-to-github.py --existing
 ```
 
-Or with git:
-
-```bash
-gh auth setup-git
-git remote set-url origin https://github.com/0xx9/telegram-agent-kit.git
-git push -u origin main
-```
+The script auto-detects empty repos and uses `git push`. The GitHub Git API returns 409 on empty repos — use git push instead.
 
 ## Step 4 — Add topics (helps discovery)
 

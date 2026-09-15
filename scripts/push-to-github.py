@@ -107,8 +107,17 @@ def upload_blob(token, content: bytes):
     return r["sha"]
 
 
+def repo_is_empty(token):
+    try:
+        api("GET", f"/repos/{OWNER}/{REPO}/git/ref/heads/main", token=token)
+        return False
+    except RuntimeError as e:
+        return "404" in str(e)
+
+
 def main():
     skip_create = "--existing" in sys.argv or os.getenv("SKIP_CREATE") == "1"
+    use_git = "--git" in sys.argv or os.getenv("USE_GIT_PUSH") == "1"
     token = get_token()
     print(f"Pushing {OWNER}/{REPO} ...")
 
@@ -130,6 +139,11 @@ def main():
             raise
     else:
         print("Repository exists, uploading files ...")
+
+    if use_git or repo_is_empty(token):
+        print("Using git push (recommended for empty repos) ...")
+        push_with_git()
+        return
 
     files = list_files()
     tree_items = []
@@ -173,6 +187,18 @@ def main():
             token=token,
         )
 
+    print(f"Done: https://github.com/{OWNER}/{REPO}")
+
+
+def push_with_git():
+    remote = f"https://github.com/{OWNER}/{REPO}.git"
+    subprocess.run(["gh", "auth", "setup-git"], check=False)
+    subprocess.run(["git", "-C", REPO_DIR, "remote", "remove", "origin"], check=False)
+    subprocess.run(["git", "-C", REPO_DIR, "remote", "add", "origin", remote], check=True)
+    branch = subprocess.check_output(
+        ["git", "-C", REPO_DIR, "branch", "--show-current"], text=True
+    ).strip() or "main"
+    subprocess.run(["git", "-C", REPO_DIR, "push", "-u", "origin", branch], check=True)
     print(f"Done: https://github.com/{OWNER}/{REPO}")
 
 
