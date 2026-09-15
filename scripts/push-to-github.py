@@ -27,8 +27,13 @@ def get_token() -> str:
             return token
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
-    creds = open(os.path.expanduser("~/.git-credentials")).read()
-    return creds.split(f"{OWNER}:")[1].split("@")[0]
+    creds_path = os.path.expanduser("~/.git-credentials")
+    if os.path.isfile(creds_path):
+        creds = open(creds_path).read()
+        marker = f"{OWNER}:"
+        if marker in creds:
+            return creds.split(marker, 1)[1].split("@")[0]
+    raise RuntimeError("No GitHub token found. Run: gh auth login -s repo")
 
 
 def api(method, path, data=None, token="", retries=3):
