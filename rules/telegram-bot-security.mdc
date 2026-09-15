@@ -1,0 +1,22 @@
+---
+description: Security guardrails for Telegram bot and userbot projects. Always enforce secret handling, session safety, and payment idempotency.
+globs:
+  - "**/*.py"
+  - "**/.env*"
+  - "**/*.session"
+alwaysApply: true
+---
+
+# Telegram Bot Security Rules
+
+When editing Telegram-related code:
+
+1. **Secrets** — Load `BOT_TOKEN`, `API_ID`, `API_HASH` from environment only. Never hardcode or log them.
+2. **Git** — Never track `.env`, `*.session`, or credentials. Ensure `.gitignore` covers them before adding files.
+3. **Payments** — Grant access only on `successful_payment`, not on `pre_checkout_query`. Store `telegram_payment_charge_id` for idempotency.
+4. **Admin** — Restrict privileged commands to IDs from env (`ADMIN_ID` / `ADMIN_IDS`), not usernames alone.
+5. **Userbots** — Warn when using Telethon/Pyrogram for automation that may violate Telegram ToS. Never commit session files.
+6. **Production** — Prefer webhooks over polling. Do not block webhook handlers with long synchronous work.
+7. **Rate limits** — Handle flood wait / throttling. Never tight-loop retries on Telegram API errors.
+
+Before suggesting a commit, scan changes for token-like strings and session file paths.
